@@ -1,7 +1,8 @@
 def build_deck
-  numbers = %w[Ace King Queen Jack 10 9 8 7 6 5 4 3 2]
+  # numbers = %w[Ace King Queen Jack 10 9 8 7 6 5 4 3 2]
+  numbers = %w[6 5 4 3 2]
   suits = %w[Spades Hearts Clubs Diamonds]
-  values = (2..14).to_a.reverse
+  values = (2..6).to_a.reverse
 
   value_hash = numbers.zip(values).to_h
 
@@ -20,8 +21,8 @@ end
 def run_game
   deck = build_deck
 
-  player = deck[0..25]
-  computer = deck[26..51]
+  player = deck[0..9]
+  computer = deck[10..19]
 
   until computer.empty? || player.empty?
     play_round(player, computer)
@@ -32,8 +33,6 @@ def run_game
 end
 
 def play_round(player, computer)
-  p ">> You have #{player.length} card(s) left"
-  p ">> Computer has #{computer.length} card(s) left"
   p "press enter to play your card"
   gets
 
@@ -45,6 +44,8 @@ def play_round(player, computer)
   middle << card_2
 
   play_war(middle, player, computer)
+  p ">> You have #{player.length} card(s) left"
+  p ">> Computer has #{computer.length} card(s) left"
 end
 
 def play_war(middle, player, computer)
@@ -62,7 +63,7 @@ def play_war(middle, player, computer)
     puts "\n"
     return computer.concat(middle)
   else
-    puts "==========I DECLARE WAR=========="
+    puts "========================================================I DECLARE WAR========================================================"
 
     4.times do
       middle << player.delete_at(0)

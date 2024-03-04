@@ -1,14 +1,14 @@
 class Card
+  NUMBERS = %w[Ace King Queen Jack 10 9 8 7 6 5 4 3 2]
+  SUITS = %w[Spades Hearts Clubs Diamonds]
+  VALUES = (2..14).to_a.reverse
+
+  VALUE_HASH = NUMBERS.zip(VALUES).to_h
+
   def initialize(number, suit)
     @number = number
     @suit = suit
   end
-
-  numbers = %w[Ace King Queen Jack 10 9 8 7 6 5 4 3 2]
-  suits = %w[Spades Hearts Clubs Diamonds]
-  values = (2..14).to_a.reverse
-
-  value_hash = numbers.zip(values).to_h
 
   def number
     @number

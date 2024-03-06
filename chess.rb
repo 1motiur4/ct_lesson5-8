@@ -50,6 +50,7 @@ class Board
     return false if piece.nil?
     return false if piece.color == "black" && whites_turn
     return false if piece.color == "white" && !whites_turn
+    return false unless piece.valid_move?(start_coord, end_coord)
 
     @board[start_row][start_column] = nil
     @board[end_row][end_column] = piece
@@ -63,6 +64,16 @@ class Board
     def display
       return " \u265F ".colorize(color: :light_white) if @color == "white"
       return " \u265F ".colorize(color: :light_black) if @color == "black"
+    end
+
+    def valid_move?(from, to)
+      direction = @color == "white" ? -1 : 1
+      from_row, from_column = from.chars.map(&:to_i)
+      to_row, to_column = to.chars.map(&:to_i)
+
+      return true if from_row + direction == to_row && from_column == to_column
+
+      false
     end
 
     def color

@@ -26,19 +26,29 @@ class Board
     @board[row][column] = piece
   end
 
+  def get_piece(coord)
+    row, column = coord.chars.map(&:to_i)
+
+    @board[row][column]
+  end
+
   def set_up_pieces
+    # SETTING UP BLACK PIECES
     (10..17).each do |coord|
       set_piece(Pawn.new("black"), coord.to_s)
     end
 
     set_piece(Rook.new("black"), "00")
     set_piece(Rook.new("black"), "07")
+    set_piece(King.new("black"), "51")
 
+    # SETTING UP WHITE PIECES
     (60..67).each do |coord|
       set_piece(Pawn.new("white"), coord.to_s)
     end
     set_piece(Rook.new("white"), "70")
     set_piece(Rook.new("white"), "77")
+    set_piece(King.new("white"), "21")
   end
 
   def move_piece(start_coord, end_coord, whites_turn)
@@ -50,7 +60,7 @@ class Board
     return false if piece.nil?
     return false if piece.color == "black" && whites_turn
     return false if piece.color == "white" && !whites_turn
-    return false unless piece.valid_move?(start_coord, end_coord)
+    return false unless piece.valid_move?(start_coord, end_coord, self)
 
     @board[start_row][start_column] = nil
     @board[end_row][end_column] = piece
@@ -66,14 +76,33 @@ class Board
       return " \u265F ".colorize(color: :light_black) if @color == "black"
     end
 
-    def valid_move?(from, to)
-      direction = @color == "white" ? -1 : 1
+    def valid_move?(from, to, board)
       from_row, from_column = from.chars.map(&:to_i)
       to_row, to_column = to.chars.map(&:to_i)
 
       return true if from_row + direction == to_row && from_column == to_column
+      moving_diagonally = from_row + direction == to_row && (from_column + 1 == to_column || from_column - 1 == to_column)
+      piece = board.get_piece(to)
+      return true if moving_diagonally && !piece.nil? && piece.color != @color
 
       false
+    end
+
+    def is_attacking?(coord, board)
+      #look at pieces at each diagonal
+      # see if the piece is a king
+
+      coord_row, coord_column = coord.chars.map(&:to_i)
+      piece_1 = board.get_piece("#{coord_row + direction}#{coord_column + 1}")
+      piece_2 = board.get_piece("#{coord_row + direction}#{coord_column - 1}")
+
+      return true if !piece_1.nil? && piece_1.class == King
+
+      false
+    end
+
+    def direction
+      @color == "white" ? -1 : 1
     end
 
     def color
@@ -95,6 +124,21 @@ class Board
       @color
     end
   end
+
+  class King
+    def initialize(color)
+      @color = color
+    end
+
+    def display
+      return " \u265A ".colorize(color: :light_white) if @color == "white"
+      return " \u265A ".colorize(color: :light_black) if @color == "black"
+    end
+
+    def color
+      @color
+    end
+  end
 end
 
 class ChessGame
@@ -106,6 +150,16 @@ class ChessGame
   def play
     loop do
       @board.display
+
+      @board.grid.each_with_index do |row, i|
+        row.each_with_index do |spot, j|
+          next if spot.nil?
+          next unless spot.class == Pawn
+
+          puts "ATTACKING" if spot.is_attacking?("#{i}#{j}", @board)
+        end
+      end
+
       puts "Turn: White" if @whites_turn
       puts "Turn: Black" unless @whites_turn
       puts "Which piece would you like to move?"

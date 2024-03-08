@@ -1,5 +1,4 @@
 require "colorize"
-require "colorized_string"
 
 class Board
   attr_reader :grid
@@ -22,9 +21,9 @@ class Board
     end
   end
 
-  #"13" will be the coordinate for row 1, col 3
   def set_piece(piece, coordinate)
     row, column = coordinate.chars.map(&:to_i)
+
     @grid[row][column] = piece
   end
 
@@ -35,19 +34,17 @@ class Board
   end
 
   def set_up_pieces
-    # SETTING UP BLACK PIECES
     (10..17).each do |coord|
       set_piece(Pawn.new("black"), coord.to_s)
     end
-
     set_piece(Rook.new("black"), "00")
     set_piece(Rook.new("black"), "07")
     set_piece(King.new("black"), "51")
 
-    # SETTING UP WHITE PIECES
     (60..67).each do |coord|
       set_piece(Pawn.new("white"), coord.to_s)
     end
+
     set_piece(Rook.new("white"), "70")
     set_piece(Rook.new("white"), "77")
     set_piece(King.new("white"), "71")
@@ -98,6 +95,7 @@ class Pawn
     to_row, to_column = to.chars.map(&:to_i)
 
     return true if from_row + direction == to_row && from_column == to_column
+
     moving_diagonally = from_row + direction == to_row && (from_column + 1 == to_column || from_column - 1 == to_column)
     piece = board.get_piece(to)
     return true if moving_diagonally && !piece.nil? && piece.color != @color
@@ -117,12 +115,12 @@ class Pawn
     false
   end
 
-  def direction
-    @color == "white" ? -1 : 1
-  end
-
   def color
     @color
+  end
+
+  def direction
+    @color == "white" ? -1 : 1
   end
 end
 
@@ -168,18 +166,17 @@ class ChessGame
       color = @whites_turn ? "white" : "black"
 
       puts "In Check" if @board.in_check?(color)
-
-      puts "Turn: White" if @whites_turn
-      puts "Turn: Black" unless @whites_turn
-      puts "Which piece would you like to move?"
+      puts "turn: White" if @whites_turn
+      puts "turn: Black" unless @whites_turn
+      puts "What piece would you like to move?"
       start_coord = gets.chomp
 
-      puts "Where would you like to move this piece?"
+      puts "Where would you like to move it to?"
       end_coord = gets.chomp
 
       moved = @board.move_piece(start_coord, end_coord, @whites_turn)
 
-      puts "INVALID MOVE! Try again" unless moved
+      puts "INVALID MOVE! try again!" unless moved
       next unless moved
 
       @whites_turn = !@whites_turn

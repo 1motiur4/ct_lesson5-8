@@ -3,24 +3,40 @@ class Piece
   attr_accessor :position
 
   def initialize(color, position, board)
-    @color = color
-    @position = position
-    @board = board
-    board.set_piece(self, position)
+    @color, @position, @board = color, position, board
+
+    board[position] = self
   end
 
   def display
-    colorize_color = @color == "white" ? :light_white : :light_black
-    return " #{picture} ".colorize(color: colorize_color)
+    " #{picture} ".colorize(color: colorize_color)
   end
 
-  def valid_move?(to)
-    to_row, to_column = to
-    return false if to_row < 0 || to_row > 7
-    return false if to_column < 0 || to_column > 7
+  def colorize_color
+    color == :white ? :light_white : :black
+  end
 
-    return false if position == to
+  def row
+    position[0]
+  end
 
-    true
+  def col
+    position[1]
+  end
+
+  def valid_moves
+    moves.reject { |move| move_to_check?(move) }
+  end
+
+  def move_to_check?(move)
+    temp_board = board.dup
+
+    temp_board.move_piece!(position, move)
+
+    temp_board.in_check?(color)
+  end
+
+  def moves
+    []
   end
 end

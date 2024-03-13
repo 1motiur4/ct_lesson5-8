@@ -1,94 +1,109 @@
+require "colorize"
 require_relative "pieces"
 
 class Board
-  attr_reader :grid
+  def initialize(fill_board = true)
+    @rows = Array.new(8) { Array.new(8) }
+    set_up_pieces if fill_board
+  end
 
-  def initialize
-    @grid = Array.new(8) { Array.new(8) }
-    set_up_pieces
+  def []=(position, piece)
+    row, col = position
+    @rows[row][col] = piece
+  end
+
+  def [](position)
+    row, col = position
+    @rows[row][col]
+  end
+
+  def checkmate?(color)
+    own_pieces = pieces.filter { |piece| piece.color == color }
+
+    own_pieces.map(&:valid_moves).flatten.empty?
+  end
+
+  def move_piece(turn_color, start_pos, end_pos)
+    piece = self[start_pos]
+
+    raise "must move a piece" if piece.nil?
+    raise 'can\'t move opponent\'s piece' unless turn_color == piece.color
+    raise 'can\'t move piece like that' unless piece.valid_moves.include?(end_pos)
+
+    self[start_pos] = nil
+    self[end_pos] = piece
+    piece.position = end_pos
+  end
+
+  def move_piece!(start_pos, end_pos)
+    piece = self[start_pos]
+
+    self[start_pos] = nil
+    self[end_pos] = piece
+    piece.position = end_pos
+  end
+
+  def in_check?(color)
+    enemy_pieces = pieces.reject { |piece| piece.color == color }
+
+    enemy_pieces.each do |piece|
+      return true if piece.moves.include?(king_position(color))
+    end
+
+    false
+  end
+
+  def king_position(color)
+    king = pieces.find { |piece| piece.color == color && piece.class == King }
+
+    king.position
   end
 
   def display
-    @grid.each_with_index do |row, i|
-      row.each_with_index do |spot, j|
-        background = :white if (i + j).even?
-        background = :black if (i + j).odd?
-
-        print "   ".colorize(background: background) if spot.nil?
-        print spot.display.colorize(background: background) unless spot.nil?
+    @rows.each_with_index do |row, i|
+      row.each_with_index do |square, j|
+        bg = (i + j).even? ? :white : :light_black
+        piece_display = square.nil? ? "   " : square.display
+        print piece_display.colorize(background: bg)
       end
       puts
     end
   end
 
-  #"13" will be the coordinate for row 1, col 3
-  def set_piece(piece, coordinate)
-    row, column = coordinate
-    @grid[row][column] = piece
+  def on?(end_pos)
+    end_row, end_col = end_pos
+
+    end_row.between?(0, 7) && end_col.between?(0, 7)
   end
 
-  def get_piece(coord)
-    row, column = coord
-
-    @grid[row][column]
+  def pieces
+    @rows.flatten.reject { |square| square.nil? }
   end
+
+  def dup
+    temp_board = Board.new(false)
+
+    pieces.each do |piece|
+      piece.class.new(piece.color, piece.position, temp_board)
+    end
+
+    temp_board
+  end
+
+  private
 
   def set_up_pieces
-    # SETTING UP BLACK PIECES
-    (10..17).each do |coord|
-      Pawn.new("black", coord.digits.reverse, self)
+    (0..7).each { |i| Pawn.new(:white, [6, i], self) }
+    [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook].each_with_index do |piece, i|
+      piece.new(:white, [7, i], self)
     end
 
-    Rook.new("black", [0, 0], self)
-    Rook.new("black", [0, 7], self)
-    King.new("black", [0, 4], self)
-    Queen.new("black", [0, 3], self)
-    Bishop.new("black", [0, 2], self)
-    Bishop.new("black", [0, 5], self)
-    Knight.new("black", [0, 1], self)
-    Knight.new("black", [0, 6], self)
-
-    # SETTING UP WHITE PIECES
-    (60..67).each do |coord|
-      Pawn.new("white", coord.digits.reverse, self)
-    end
-    Rook.new("white", [7, 0], self)
-    Rook.new("white", [7, 7], self)
-    King.new("white", [7, 4], self)
-    Queen.new("white", [7, 3], self)
-    Bishop.new("white", [7, 2], self)
-    Bishop.new("white", [7, 5], self)
-    Knight.new("white", [7, 1], self)
-    Knight.new("white", [7, 6], self)
-  end
-
-  def move_piece(start_coord, end_coord, whites_turn)
-    start_row, start_column = start_coord.chars.map(&:to_i)
-    end_row, end_column = end_coord.chars.map(&:to_i)
-
-    piece = @grid[start_row][start_column]
-
-    return false if piece.nil?
-    return false if piece.color == "black" && whites_turn
-    return false if piece.color == "white" && !whites_turn
-    return false unless piece.valid_move?([end_row, end_column])
-
-    @grid[start_row][start_column] = nil
-    @grid[end_row][end_column] = piece
-    piece.position = [end_row, end_column]
-  end
-
-  def in_check?(color)
-    @grid.each do |row|
-      row.each do |spot|
-        next if spot.nil?
-        next unless spot.class == Pawn
-        next if spot.color == color
-
-        return true if spot.is_attacking?
-      end
+    (0..7).each { |i| Pawn.new(:black, [1, i], self) }
+    [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook].each_with_index do |piece, i|
+      piece.new(:black, [0, i], self)
     end
 
-    false
+    Pawn.new(:white, [2, 4], self)
+    # Knight.new(:white, [3,4], self)
   end
 end
